@@ -2,6 +2,33 @@
 
 TITLE Generate A New AnyDesk ID
 
+:: Run admin prompt
+:-------------------------------------
+REM  --> Check for permissions
+>nul 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system"
+
+REM --> If error flag set, we do not have admin.
+if '%errorlevel%' NEQ '0' (
+    echo Requesting administrative privileges...
+    goto UACPrompt
+) else ( goto gotAdmin )
+
+:UACPrompt
+    echo Set UAC = CreateObject^("Shell.Application"^) > "%temp%\getadmin.vbs"
+    set params = %*:"=""
+    echo UAC.ShellExecute "cmd.exe", "/c %~s0 %params%", "", "runas", 1 >> "%temp%\getadmin.vbs"
+
+    "%temp%\getadmin.vbs"
+    del "%temp%\getadmin.vbs"
+    
+    REM Exit the original process immediately after launching elevated version
+    exit /B 0
+
+:gotAdmin
+    pushd "%CD%"
+    CD /D "%~dp0"
+:--------------------------------------
+
 
 
 @ECHO Disabling the AnyDesk service...
@@ -78,20 +105,18 @@ IF "%ARCH%"=="64-bit" GOTO 64BIT ELSE (
 :64BIT
 
 IF EXIST "C:\Program Files (x86)\AnyDesk" (
-    CD "C:\Program Files (x86)\AnyDesk" >NUL 2>&1
-    START AnyDesk.exe >NUL 2>&1
+    START "" "C:\Program Files (x86)\AnyDesk\AnyDesk.exe" >NUL 2>&1
     GOTO END >NUL 2>&1
-    ) ELSE GOTO ADINF
+    ) ELSE GOTO :ADINF
 
 
 
 :32BIT
 
 IF EXIST "C:\Program Files\AnyDesk" (
-    CD "C:\Program Files\AnyDesk" >NUL 2>&1
-    START AnyDesk.exe >NUL 2>&1
+    START "" "C:\Program Files (x86)\AnyDesk\AnyDesk.exe" >NUL 2>&1
     GOTO END >NUL 2>&1
-    ) ELSE GOTO ADINF
+    ) ELSE GOTO :ADINF
 
 
 
